@@ -1,0 +1,30 @@
+# Boreal Field Services — gate rules (config stub, not enforced code)
+# Cross-Cutting Governance & Operations: Agent Hub registry/control,
+# monitoring & audit, data quality, model governance & guardrails,
+# device security (encryption, remote wipe).
+
+gates:
+  - id: no-approval-on-unverified-stock
+    rule: "Approval never applies to a stock line whose status is unverified."
+    applies_to: StockReservation
+    on_refusal: log
+
+  - id: human-approval-for-consequential-actions
+    rule: "Consequential actions (reservations, transfers, customer commitments) require a named human approver. Agents propose; humans approve."
+    applies_to: StockReservation, CustomerCommitment
+    on_refusal: log
+
+  - id: no-customer-commitment-on-uncertain-plan
+    rule: "No customer commitment may be issued while the recovery plan depends on unverified stock or unconfirmed ETAs."
+    applies_to: CustomerCommitment
+    on_refusal: log
+
+  - id: every-refusal-logged
+    rule: "Every gate refusal is written to the audit log with the agent, the line, the rule id, and the reason."
+    applies_to: all
+    on_refusal: log
+
+audit:
+  log_refusals: true
+  log_approvals: true
+  log_agent_proposals: true
