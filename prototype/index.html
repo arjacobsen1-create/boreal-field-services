@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<link rel="icon" href="data:," />
+<title>Boreal Interactive Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light only;
+  --bg:#fbf9ff; --bg2:#f5f1ff; --panel:#ffffff; --panel-soft:#f8f5ff;
+  --ink:#2e1065; --ink2:#4c1d95; --muted:#453562;
+  --purple:#6d28d9; --purple-solid:#7c3aed; --violet-soft:#ede9fe; --violet-mid:#c4b5fd;
+  --pink:#db2777; --pink-solid:#db2777; --pink-soft:#fce7f3; --pink-ink:#831843;
+  --lav:#ddd0fa; --line:#c9b8f5;
+  --good:#047857; --good-bg:#d1fae5; --warn:#92400e; --warn-bg:#fef3c7;
+  --log-bg:#2a1650; --log-ink:#ede9fe;
+  --shadow:0 6px 28px rgba(76,29,149,.09);
+  --radius:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#fbf9ff}
+body{
+  font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:#fbf9ff;
+  color:var(--ink); line-height:1.6; font-size:17px;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+button{font:inherit; min-height:48px; cursor:pointer}
+a{min-height:32px}
+.wrap{max-width:1120px;margin:0 auto;padding:18px 16px 56px}
+.hand{font-family:"Caveat",cursive}
+
+/* ---------- intro ---------- */
+.intro{padding:10px 2px 4px}
+.intro h1{font-family:"DM Sans",system-ui,sans-serif;font-weight:900;font-size:clamp(1.85rem,5.5vw,2.75rem);line-height:1.12;letter-spacing:-.02em;margin:0;color:var(--ink2)}
+.intro .sub{font-weight:700;color:var(--purple);margin:6px 0 0;font-size:1.02rem}
+.intro p{color:var(--muted);max-width:72ch;margin:8px 0 0}
+.place-note{
+  margin-top:14px;background:var(--panel);border:1.5px solid var(--line);border-radius:14px;
+  padding:12px 14px;display:flex;gap:12px;align-items:flex-start;
+}
+.place-note .dot{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:var(--pink);color:#fff;display:grid;place-items:center;font-weight:900}
+.place-note p{margin:0;color:var(--ink);font-size:.95rem}
+.place-note strong{color:var(--ink2)}
+.sim-note{
+  margin-top:10px;border:1.5px dashed var(--pink);background:#fdf2f8;color:var(--pink-ink);
+  border-radius:14px;padding:10px 14px;font-size:.93rem;font-weight:600;
+}
+
+/* ---------- deck tabs ---------- */
+.deck-tabs{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0 0;
+}
+.deck-tab{
+  border:2px solid var(--line);background:var(--panel);color:var(--ink2);
+  border-radius:16px;padding:10px 8px;text-align:left;display:flex;gap:10px;align-items:center;
+  font-weight:800;line-height:1.2;min-height:64px;
+}
+.deck-tab .num{
+  flex:0 0 auto;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  background:var(--violet-soft);color:var(--purple);font-size:1.05rem;font-weight:900;
+}
+.deck-tab small{display:block;font-weight:600;color:var(--muted);font-size:.78rem;margin-top:2px}
+.deck-tab[aria-selected="true"]{border-color:var(--purple);background:var(--violet-soft);box-shadow:0 8px 22px rgba(109,40,217,.18)}
+.deck-tab[data-sheet="2"][aria-selected="true"]{border-color:var(--pink);background:var(--pink-soft)}
+.deck-tab[data-sheet="2"][aria-selected="true"] .num{background:var(--pink);color:#fff}
+.deck-tab[data-sheet="1"][aria-selected="true"] .num{background:var(--purple);color:#fff}
+.deck-tab[data-sheet="3"][aria-selected="true"] .num{background:var(--purple);color:#fff}
+.deck-tab:focus-visible,button:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+
+/* ---------- layered deck ---------- */
+.deck{position:relative;margin-top:14px;margin-bottom:36px}
+/* the other two sheets peek out behind the active one, at the bottom */
+.deck::before,.deck::after{
+  content:"";position:absolute;left:8px;right:8px;bottom:-15px;height:90px;
+  background:#efe9ff;border:1.5px solid var(--line);border-radius:var(--radius);
+  transform:rotate(-.6deg);pointer-events:none;
+}
+.deck::after{bottom:-28px;left:14px;right:14px;transform:rotate(.7deg);background:#f5f0ff}
+.sheet{
+  position:relative;z-index:1;background:#ffffff;border:1.5px solid var(--line);border-radius:var(--radius);
+  padding:20px 18px 22px;box-shadow:0 6px 28px rgba(76,29,149,.09);
+}
+.sheet[hidden]{display:none}
+.sheet h2{margin:0 0 4px;font-size:1.25rem;color:var(--ink2);letter-spacing:.01em}
+.sheet h2 .hand{font-size:1.55rem;color:var(--pink)}
+.sheet .lede{color:var(--muted);margin:0 0 14px;max-width:70ch}
+h3{color:var(--ink2);margin:20px 0 8px;font-size:1rem}
+
+/* ---------- scenario / controls ---------- */
+.scenario{background:var(--panel-soft);border:1px solid var(--line);border-radius:14px;padding:14px}
+.scenario p{margin:0 0 8px}.scenario p:last-child{margin:0}
+.scenario b{color:var(--ink2)}
+.progress{display:flex;gap:6px;margin:16px 0 4px;flex-wrap:wrap}
+.pstep{flex:1 1 120px;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;font-size:.8rem;font-weight:700;color:var(--muted);background:var(--panel);line-height:1.3}
+.pstep .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--violet-soft);color:var(--purple);margin-right:6px;font-weight:900}
+.pstep.done{border-color:var(--purple);color:var(--ink2)}
+.pstep.done .n{background:var(--purple);color:#fff}
+.pstep.now{border-color:var(--pink);background:var(--pink-soft);color:var(--pink-ink)}
+.pstep.now .n{background:var(--pink);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{border:none;border-radius:14px;padding:12px 18px;font-weight:900;font-size:1rem}
+.btn-run{background:var(--purple-solid);color:#fff;box-shadow:0 8px 20px rgba(124,58,237,.35)}
+.btn-reset{background:var(--violet-soft);color:var(--ink2);border:1.5px solid var(--line)}
+.btn-pink{background:var(--pink-solid);color:#fff;box-shadow:0 8px 20px rgba(219,39,119,.35)}
+.btn-verified{background:#047857;color:#fff;box-shadow:0 8px 20px rgba(4,120,87,.3)}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.85}
+.gate-zone{margin-top:16px;border:2px solid var(--pink);background:#fdf2f8;border-radius:16px;padding:14px}
+.gate-zone h3{margin:0 0 4px;color:var(--pink-ink)}
+.gate-zone p{margin:0 0 10px;color:var(--pink-ink);font-size:.94rem}
+.stage{margin-top:16px;border:1.5px dashed var(--purple);background:var(--panel-soft);border-radius:14px;padding:14px 16px;min-height:120px}
+.stage .tag{display:inline-block;background:var(--purple);color:#fff;border-radius:999px;padding:3px 12px;font-size:.78rem;font-weight:900;letter-spacing:.05em;margin-bottom:8px}
+.stage p{margin:0 0 6px}.stage p:last-child{margin:0}
+.banner{border-radius:14px;padding:13px 15px;margin-top:12px;display:none;font-size:.96rem}
+.banner.show{display:block}
+.banner.refuse{background:var(--pink-soft);border:2px solid var(--pink);color:var(--pink-ink)}
+.banner.ok{background:var(--good-bg);border:2px solid var(--good);color:var(--ink)}
+.banner.hold{background:var(--warn-bg);border:2px solid var(--warn);color:var(--ink)}
+
+/* ---------- agents ---------- */
+.agents{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f3efff;border:2px solid var(--violet-mid);border-radius:18px;padding:12px}
+.agent{border:2px solid var(--line);border-radius:14px;padding:13px;background:#ffffff;position:relative}
+.agent .avatar{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.35rem;background:var(--violet-soft);margin-bottom:8px}
+.agent h4{margin:0;font-size:1.12rem;color:var(--ink2)}
+.agent .role{font-weight:800;color:var(--purple);font-size:.86rem;margin:1px 0 6px}
+.agent p{margin:0;color:var(--muted);font-size:.9rem}
+.agent .live{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;font-size:.88rem;color:var(--ink)}
+.status{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.74rem;font-weight:900;letter-spacing:.04em;background:var(--violet-soft);color:var(--purple);text-transform:uppercase}
+.agent.active{border-color:var(--purple);box-shadow:0 10px 24px rgba(109,40,217,.18)}
+.agent.active .status{background:var(--purple);color:#fff}
+.agent.done{border-color:var(--good)}
+.agent.done .status{background:var(--good);color:#fff}
+
+/* ---------- mini skeleton ---------- */
+.mini-stack{display:flex;flex-direction:column;gap:6px}
+.mini-layer{border:1.5px solid var(--line);background:var(--panel-soft);border-radius:11px;padding:8px 12px;font-weight:700;color:var(--muted);font-size:.92rem;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mini-layer small{font-weight:500}
+.mini-layer.on{border-color:var(--purple);background:var(--violet-soft);color:var(--ink2);box-shadow:0 4px 14px rgba(109,40,217,.16)}
+.mini-layer.on-pink{border-color:var(--pink);background:var(--pink-soft);color:var(--pink-ink)}
+
+/* ---------- full architecture map (Sheet 2) ---------- */
+.map{border:2px solid var(--line);border-radius:18px;padding:14px;background:var(--panel-soft)}
+.map-title{text-align:center;margin-bottom:12px}
+.map-title .hand{font-size:1.7rem;color:var(--ink2);display:block;line-height:1.1}
+.map-title span{color:var(--muted);font-size:.88rem;font-weight:600}
+.map-grid{display:grid;grid-template-columns:190px 1fr;gap:12px}
+.map-box{border:2px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--panel)}
+.map-box h4{margin:0 0 4px;color:var(--ink2);font-size:1rem}
+.map-box ul{margin:4px 0 0;padding-left:18px;color:var(--muted);font-size:.88rem}
+.map-box p{margin:0;color:var(--muted);font-size:.88rem}
+.map-box.on{border-color:var(--purple);box-shadow:0 0 0 3px var(--violet-mid),0 10px 22px rgba(109,40,217,.18);background:var(--violet-soft)}
+.map-box.on-pink{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft),0 10px 22px rgba(219,39,119,.18);background:var(--pink-soft)}
+.btp{border:2.5px solid var(--purple);border-radius:16px;padding:12px;background:#faf8ff}
+.btp>h4{margin:0 0 10px;color:var(--ink2);font-size:1.05rem;text-align:center}
+.btp .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.cap-box{border-color:var(--pink)}
+.gov-band{margin-top:12px;text-align:center}
+.arrow{text-align:center;color:var(--purple);font-weight:900;line-height:1;margin:4px 0}
+.identity-box{border-color:var(--pink);background:#ffffff}
+.identity-box h4{color:var(--pink-ink)}
+.flow-list{counter-reset:flow;list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.flow-list li{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px 10px 46px;position:relative;font-size:.94rem}
+.flow-list li::before{counter-increment:flow;content:counter(flow);position:absolute;left:10px;top:10px;width:26px;height:26px;border-radius:50%;background:var(--violet-soft);color:var(--purple);display:grid;place-items:center;font-weight:900}
+.flow-list li.done{border-color:var(--purple)}
+.flow-list li.done::before{background:var(--purple);color:#fff}
+.flow-list li.now{border-color:var(--pink);background:var(--pink-soft)}
+.flow-list li.now::before{background:var(--pink);color:#fff}
+
+/* ---------- end-to-end arc ---------- */
+.arc{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px}
+.arc-step{flex:1 1 130px;border:2px solid var(--line);background:#ffffff;border-radius:12px;padding:9px 11px}
+.arc-step .an{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--violet-soft);color:var(--purple);font-weight:900;margin-right:6px}
+.arc-step b{color:var(--ink2)}
+.arc-step p{margin:4px 0 0;color:var(--muted);font-size:.82rem;line-height:1.35}
+.arc-step.on{border-color:var(--purple);background:var(--violet-soft)}
+.arc-step.on .an{background:var(--purple);color:#fff}
+.arc-step.learn{border-style:dashed}
+.arc-step.learn.on{border-color:var(--pink);background:var(--pink-soft)}
+.arc-step.learn.on .an{background:var(--pink);color:#fff}
+
+/* ---------- knowledge graph ---------- */
+/* ---------- interactivity: tappable cards, run bar, detail panels ---------- */
+.tappable{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .15s ease, box-shadow .15s ease}
+.tappable:hover{border-color:var(--purple)}
+.tappable:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.tappable.sel{border-color:var(--pink)!important;box-shadow:0 0 0 3px var(--pink-soft),0 10px 22px rgba(219,39,119,.16)}
+.tap-hint{color:var(--muted);font-size:.86rem;font-weight:600;margin:6px 0 0}
+.detail{margin-top:10px;border:1.5px solid var(--purple);background:var(--panel-soft);border-radius:14px;padding:12px 14px;font-size:.94rem}
+.detail b{color:var(--ink2)}
+.detail .dtag{display:inline-block;background:var(--purple);color:#fff;border-radius:999px;padding:2px 10px;font-size:.72rem;font-weight:900;letter-spacing:.05em;margin-bottom:6px;text-transform:uppercase}
+.detail p{margin:0}
+.runbar{position:sticky;top:8px;z-index:20;display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#ffffff;border:2px solid var(--purple);border-radius:16px;padding:10px 12px;box-shadow:0 10px 24px rgba(109,40,217,.18);margin:0 0 16px}
+.runbar .btn{min-height:44px;padding:9px 14px;font-size:.95rem}
+.runbar .rb-status{font-weight:800;color:var(--ink2);font-size:.9rem}
+.pstep{cursor:pointer}
+.pstep:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.tappable{transition:none}}
+
+.kg-principle{border:2px solid var(--pink);background:#fdf2f8;color:var(--pink-ink);border-radius:14px;padding:12px 14px;font-weight:700;margin-top:12px}
+.kg-note{border:1.5px dashed var(--purple);background:var(--panel-soft);color:var(--ink);border-radius:12px;padding:10px 12px;font-size:.92rem;font-weight:600;margin:12px 0 0}
+.kg-ex-title{color:var(--ink2);font-size:1.05rem;margin:22px 0 2px}
+.kg-ex-title span{display:block;font-size:.84rem;font-weight:600;color:var(--muted);margin-top:2px}
+.kg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.kg-node{border:2px solid var(--line);border-radius:14px;padding:11px 12px;background:#ffffff;text-align:center}
+.kg-node b{display:block;color:var(--ink2)}
+.kg-node span{color:var(--muted);font-size:.84rem}
+.kg-centre{border-color:var(--purple);background:#ede9fe;display:flex;flex-direction:column;justify-content:center}
+.kg-centre b{font-size:1.15rem}
+.kg-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.kg-cols ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:.92rem}
+.kg-cols p{color:var(--muted);font-size:.92rem;margin:0}
+@media (max-width:760px){.kg-grid{grid-template-columns:1fr 1fr}.kg-cols{grid-template-columns:1fr}}
+
+/* ---------- stock table / log / principles ---------- */
+.stock-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:480px}
+th{background:var(--violet-soft);color:var(--ink2);text-align:left;padding:9px 10px}
+td{padding:9px 10px;border-bottom:1px solid var(--line)}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.76rem;font-weight:900;letter-spacing:.03em}
+.pill.unchecked{background:var(--warn-bg);color:var(--warn)}
+.pill.verified{background:var(--good-bg);color:var(--good)}
+.pill.unverified{background:var(--pink-soft);color:var(--pink-ink)}
+.pill.phantom{background:var(--pink);color:#fff}
+.log{font-family:"DM Mono",ui-monospace,Menlo,monospace;font-size:.82rem;line-height:1.7;background:var(--log-bg);color:var(--log-ink);border-radius:14px;padding:14px 16px;white-space:pre-wrap;word-break:break-word;min-height:180px}
+.log .r{color:#f9a8d4}.log .g{color:#6ee7b7}.log .t{color:#d8b4fe}
+.principles{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.principles li{background:var(--panel-soft);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px 10px 42px;position:relative;font-size:.95rem}
+.principles li::before{content:"✓";position:absolute;left:12px;top:9px;width:22px;height:22px;border-radius:6px;background:var(--good);color:#fff;display:grid;place-items:center;font-weight:900;font-size:.85rem}
+.sheet-nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;border-top:1px dashed var(--line);padding-top:16px}
+.foot{margin-top:26px;color:var(--muted);font-size:.88rem;text-align:center}
+
+@media (max-width:760px){
+  .agents{grid-template-columns:1fr;gap:8px;padding:10px}
+  .agent{padding:12px}
+  .agent .avatar{width:40px;height:40px;font-size:1.2rem;margin-bottom:6px}
+  .deck-tabs{grid-template-columns:repeat(3,1fr);gap:6px}
+  .deck-tab{min-height:58px;flex-direction:column;gap:3px;text-align:center;padding:7px 4px;font-size:.84rem}
+  .deck-tab small{display:none}
+  .deck-tab .num{width:28px;height:28px;font-size:.92rem}
+  .map-grid{grid-template-columns:1fr}
+  .btp .row2{grid-template-columns:1fr}
+  .sheet{padding:16px 13px 18px}
+  table{min-width:0;font-size:.84rem}
+  th,td{padding:7px 6px}
+}
+@media (prefers-reduced-motion: reduce){
+  .sheet{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="intro">
+    <h1>Boreal Field Services — Solution Architecture</h1>
+    <p class="sub">Interactive prototype · Built on the architecture map · SAP BTP + SAP S/4HANA</p>
+    <p>Run the January morning through the architecture yourself, exactly as drawn on the map — and watch the gate refuse the one approval it must refuse.</p>
+
+  </header>
+
+  <!-- Deck tabs -->
+  <p style="margin:18px 0 0;color:var(--muted);font-weight:600">The three pages sit <strong style="color:var(--ink2)">layered behind each other</strong> — tap a tab and that sheet comes to the front, the others peeking behind it. Every button is live from the start: tap an approval too early and the gate answers and says why.</p>
+  <div class="deck-tabs" role="tablist" aria-label="Prototype pages" style="margin-top:10px">
+    <button class="deck-tab" role="tab" data-sheet="1" aria-selected="true"><span class="num">1</span><span>Run the morning<small>Scenario · the three agents · the gate</small></span></button>
+    <button class="deck-tab" role="tab" data-sheet="2" aria-selected="false"><span class="num">2</span><span>The architecture map<small>The skeleton · Knowledge Graph · the arc</small></span></button>
+    <button class="deck-tab" role="tab" data-sheet="3" aria-selected="false"><span class="num">3</span><span>Evidence &amp; principles<small>Stock picture · audit log · key principles</small></span></button>
+  </div>
+
+  <div class="deck" id="deck">
+
+    <!-- ============ SHEET 1 : RUN ============ -->
+    <section class="sheet" id="sheet1" role="tabpanel" aria-label="Page 1 — Run the morning">
+      <h2>Page 1 — Run the morning <span class="hand">the data flow, live</span></h2>
+      <p class="lede">A failed ground power unit, and a medevac flight at 10:15. Work the eight steps from Event to Outcome in order, under the end-to-end arc: Capture → Reason → Decide → Execute → Learn.</p>
+
+      <div class="runbar" aria-label="Run controls — beside the agents and the arc">
+        <button class="btn btn-run" id="nextBtnTop">▶ Run next step</button>
+        <button class="btn btn-reset" id="resetBtnTop">↺ Reset</button>
+        <span class="rb-status" id="runStatus">Ready — step 0 of 8</span>
+      </div>
+
+      <h3>The three agents — Joule Studio, on the map and on this page</h3>
+      <p class="tap-hint">Tap an agent card to see what that agent is doing at the current step.</p>
+      <div class="agents">
+        <div class="agent tappable" id="agentScout" data-agent="scout" tabindex="0" role="button" aria-label="Scout agent — tap to see what Scout is doing now">
+          <div class="avatar" aria-hidden="true">🧭</div>
+          <h4>Scout</h4><div class="role">Issue triage</div>
+          <p>Dana’s field companion. Assembles the job pack — work order, service history, manual sections, parts picture — and captures findings on site.</p>
+          <div class="live"><span class="status" id="statusScout">Idle</span><div id="liveScout" style="margin-top:6px">Waiting for the work-order event.</div></div>
+        </div>
+        <div class="agent tappable" id="agentStock" data-agent="stock" tabindex="0" role="button" aria-label="Stock agent — tap to see what Stock is doing now">
+          <div class="avatar" aria-hidden="true">📦</div>
+          <h4>Stock</h4><div class="role">Availability &amp; options</div>
+          <p>Watches stock across all 22 station stores, sees reservations and priorities, and separates verified stock from unverified stock.</p>
+          <div class="live"><span class="status" id="statusStock">Idle</span><div id="liveStock" style="margin-top:6px">Waiting for a parts question.</div></div>
+        </div>
+        <div class="agent tappable" id="agentDispatch" data-agent="dispatch" tabindex="0" role="button" aria-label="Dispatch agent — tap to see what Dispatch is doing now">
+          <div class="avatar" aria-hidden="true">🗓️</div>
+          <h4>Dispatch</h4><div class="role">Schedule &amp; impact</div>
+          <p>Assigns and re-sequences jobs around engineer location, certifications, weather and the medevac clock. Makes no customer promise on its own.</p>
+          <div class="live"><span class="status" id="statusDispatch">Idle</span><div id="liveDispatch" style="margin-top:6px">Watching the 10:15 deadline.</div></div>
+        </div>
+      </div>
+      <div class="detail" id="agentDetail" aria-live="polite"><span class="dtag">Agent</span><p><b>Tap any agent card above</b> and this panel shows what that agent is doing at the current step of the run.</p></div>
+
+      <h3>The end-to-end arc — from the Overall Architecture Arc view</h3>
+      <p class="tap-hint">Tap a stage to run the morning up to that stage.</p>
+      <div class="arc" id="arc" aria-label="End-to-end arc">
+        <div class="arc-step tappable" id="arc1" data-arc="1" tabindex="0" role="button" aria-label="Arc stage 1 — tap to run up to this stage"><span class="an">1</span><b>Capture</b><p>Field data from engineers, online or offline.</p></div>
+        <div class="arc-step tappable" id="arc2" data-arc="2" tabindex="0" role="button" aria-label="Arc stage 2 — tap to run up to this stage"><span class="an">2</span><b>Reason</b><p>AI agents investigate with trusted business context.</p></div>
+        <div class="arc-step tappable" id="arc3" data-arc="3" tabindex="0" role="button" aria-label="Arc stage 3 — tap to run up to this stage"><span class="an">3</span><b>Decide</b><p>Options and impact are evaluated and approved.</p></div>
+        <div class="arc-step tappable" id="arc4" data-arc="4" tabindex="0" role="button" aria-label="Arc stage 4 — tap to run up to this stage"><span class="an">4</span><b>Execute</b><p>Confirmed actions update S/4HANA via integration.</p></div>
+        <div class="arc-step learn tappable" id="arc5" data-arc="5" tabindex="0" role="button" aria-label="Arc stage 5, Learn — tap to run up to this stage"><span class="an">5</span><b>Learn</b><p>Outcomes, data and feedback improve agents and knowledge.</p></div>
+      </div>
+      <p style="color:var(--muted);font-size:.92rem;margin:6px 0 0"><b style="color:var(--pink)">Learn is the new fifth stage:</b> the run does not end at execution. What happened — the phantom stock, the refusal, the verified outcome — feeds back so the agents and the Knowledge Graph get better next time. Watch this strip light up as you run.</p>
+
+      <h3>The skeleton, live — watch it light up as you run (full map on Page 2)</h3>
+      <p class="tap-hint">Tap a layer to see the part it plays in the run.</p>
+      <div class="mini-stack" id="miniStack">
+        <div class="mini-layer" data-layer="tablet">Field Engineers — Tablets <small>Dana + team · offline (encrypted) · sync queue</small></div>
+        <div class="mini-layer" data-layer="cap">Field Service Application (CAP) — BTP <small>APIs · offline sync &amp; validation · conflict handling</small></div>
+        <div class="mini-layer" data-layer="agents">Joule Studio — AI Agents <small>Scout · Stock · Dispatch</small></div>
+        <div class="mini-layer" data-layer="aicore">AI Core / GenAI Hub <small>Managed runtime · model access · Responsible AI</small></div>
+        <div class="mini-layer" data-layer="context">Integration &amp; Context Services <small>Integration Suite · Business Data Cloud (governed data)</small></div>
+        <div class="mini-layer" data-layer="kg">Knowledge Graph — its own layer <small>Part ↔ equipment · work order · customer · inventory · contract · supplier (full view on Page 2)</small></div>
+        <div class="mini-layer" data-layer="s4">SAP S/4HANA — System of Record <small>Work orders · inventory &amp; reservations · billing</small></div>
+        <div class="mini-layer" data-layer="identity">Identity &amp; Access — Cloud Identity Services <small>Authentication · roles · conditional access</small></div>
+        <div class="mini-layer" data-layer="gov">Governance &amp; Operations <small>Agent Hub · monitoring &amp; audit · guardrails</small></div>
+      </div>
+      <div class="detail" id="layerDetail" aria-live="polite"><span class="dtag">Layer</span><p><b>Tap any layer above</b> and this panel shows its role — and whether it is lit at the current step.</p></div>
+
+      <div class="scenario">
+        <p><b>05:10, home station.</b> A ground power unit fails its start check. A medevac flight needs it at <b>10:15</b>.</p>
+        <p>The failed part is a <b>voltage regulator module</b>. S/4HANA shows <b>1 on the shelf</b> at the home station. Engineer <b>Dana</b> is assigned, on a tablet, with patchy connectivity.</p>
+      </div>
+
+      <div class="progress" id="progress" aria-label="Data flow progress"></div>
+
+      <div class="controls">
+        <button class="btn btn-run" id="nextBtn">▶ Run next step</button>
+        <button class="btn btn-reset" id="resetBtn">↺ Reset the morning</button>
+      </div>
+
+      <div class="stage" id="stage" aria-live="polite">
+        <span class="tag">READY</span>
+        <p>Press <b>Run next step</b> to start. Each step follows the fuller Event-to-Outcome flow (steps 1–8, listed in full on Page 2), lights up the architecture layer doing the work — including the Knowledge Graph at Step 4 — moves the agents above, advances the arc, and writes to the audit log on Page 3.</p>
+      </div>
+
+      <div class="banner hold" id="holdBanner"></div>
+      <div class="banner refuse" id="refuseBanner"><b>GATE REFUSAL — logged.</b> Station C has not synced in 26 hours, so its stock is <b>unverified</b>. The agent cannot turn stale data into confirmed stock, and no approval can be applied to an unverified line. The refusal, the approver and the reason are in the audit log.</div>
+      <div class="banner ok" id="okBanner"><b>APPROVED AND EXECUTED.</b> A human approved the verified Station B transfer. Execution ran through Integration Suite and the simulated S/4HANA now shows the reservation against the medevac job. Only now does Dispatch update the customer.</div>
+
+      <div class="gate-zone">
+        <h3>Step 6 — Human approval (the gate)</h3>
+        <p>Both buttons are live right now — tap either one at any point and the gate will answer. Approving works only on verified stock, after Stock has investigated.</p>
+        <div class="controls" style="margin-top:0">
+          <button class="btn btn-pink" id="badApproveBtn">Try: approve the unverified transfer — Station C</button>
+          <button class="btn btn-verified" id="goodApproveBtn">Approve the verified transfer — Station B</button>
+        </div>
+      </div>
+
+      <div class="sheet-nav">
+        <button class="btn btn-run" data-goto="2">Next: Page 2 — the architecture map →</button>
+      </div>
+    </section>
+
+    <!-- ============ SHEET 2 : ARCHITECTURE MAP ============ -->
+    <section class="sheet" id="sheet2" role="tabpanel" aria-label="Page 2 — The architecture map" hidden>
+      <h2>Page 2 — The architecture map <span class="hand">the skeleton</span></h2>
+      <p class="lede">The prototype is built on this map — the same layers, the same agents, the same data flow and the same gates as the handwritten Solution Architecture view. Run Page 1 and watch the matching layer light up here.</p>
+
+      <div class="map">
+        <div class="map-title"><span class="hand">Boreal Field Services — Solution Architecture</span><span>AI-enabled field service for aerospace MRO (SAP BTP + SAP S/4HANA)</span></div>
+
+        <div class="map-box" data-layer="tablet">
+          <h4>📱 Field Engineers — Tablets (Dana + team)</h4>
+          <p>Work orders · Parts usage · Photos / notes · Offline (encrypted) · Sync queue (when in coverage)</p>
+        </div>
+        <div class="arrow">↕</div>
+
+        <div class="map-grid">
+          <div class="map-box identity-box" data-layer="identity">
+            <h4>🛡 Identity &amp; Access</h4>
+            <p><b>SAP Cloud Identity Services</b></p>
+            <ul>
+              <li>Authentication</li>
+              <li>Authorisation (roles)</li>
+              <li>Device &amp; app access policies</li>
+              <li>Conditional access (managed tablets)</li>
+            </ul>
+          </div>
+
+          <div class="btp">
+            <h4>☁ SAP BTP — Application &amp; Extension Layer</h4>
+            <div class="map-box cap-box" data-layer="cap">
+              <h4>Field Service Application (CAP)</h4>
+              <p>APIs · Offline sync &amp; validation · Conflict handling · Business rules</p>
+            </div>
+            <div class="arrow">↕</div>
+            <div class="row2">
+              <div class="map-box" data-layer="agents">
+                <h4>🤖 Joule Studio — AI Agents</h4>
+                <ul>
+                  <li>Scout (issue triage)</li>
+                  <li>Stock (availability &amp; options)</li>
+                  <li>Dispatch (schedule &amp; impact)</li>
+                </ul>
+              </div>
+              <div class="map-box" data-layer="aicore">
+                <h4>AI Core / GenAI Hub</h4>
+                <ul>
+                  <li>Managed AI runtime</li>
+                  <li>Model access (SAP &amp; partner)</li>
+                  <li>Responsible AI &amp; controls</li>
+                </ul>
+              </div>
+            </div>
+            <div class="arrow">↕</div>
+            <div class="map-box" data-layer="context" style="margin-top:10px">
+              <h4>Integration &amp; Context Services</h4>
+              <ul>
+                <li>Integration Suite (APIs, events)</li>
+                <li>Business Data Cloud (governed data)</li>
+                <li>Knowledge Graph (business relationships)</li>
+              </ul>
+            </div>
+            <div class="map-box" data-layer="kg" style="margin-top:10px;border-color:var(--purple)">
+              <h4>🕸 The Knowledge Graph — its own layer</h4>
+              <p>Connects related business objects (equipment, parts, work orders, contracts, customers) to provide context for AI agents. In this case: <b>part → equipment · part → work order · equipment → customer · work order → contract</b>. Full example graph, how agents use it, and its governance are below.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">↕</div>
+        <div class="map-box" data-layer="s4">
+          <h4>SAP S/4HANA — System of Record</h4>
+          <p>Work orders · Inventory &amp; reservations · Equipment · Contracts / SLAs · Billing</p>
+        </div>
+
+        <div class="map-box gov-band" data-layer="gov">
+          <h4>⚙ Cross-Cutting Governance &amp; Operations</h4>
+          <p>Agent Hub (registry, control, feedback) · Monitoring &amp; audit · Data quality &amp; graph governance · Model governance &amp; guardrails · Device security (encryption, remote wipe)</p>
+        </div>
+      </div>
+
+      <div class="detail" id="mapDetail" aria-live="polite"><span class="dtag">Map layer</span><p><b>Tap any box on the map above</b> and this panel shows its role — and whether it is lit at the current step of the run.</p></div>
+
+      <h3>The Knowledge Graph — two worked examples from the design sheets</h3>
+      <p class="lede" style="margin-bottom:0">A connected view of key business objects and their relationships, built on governed data from Business Data Cloud (BDC). It gives agents the context to understand impact — not just isolated data — so they can investigate, recommend and assess consequences, for example a part shortage on a critical customer.</p>
+      <p class="kg-note">These are two separate worked examples from the design sheets — two datasets, not one graph. They sit apart from the January run’s stock picture on Pages 1 and 3, which keeps its own Home / Station B / Station C data.</p>
+
+      <h4 class="kg-ex-title">Example 1 — Knowledge Graph — Example for Boreal (Parts Shortage)<span>From the Overall Solution Architecture sheet</span></h4>
+      <p class="tap-hint">Tap a node to see what it contributes to the decision.</p>
+      <div class="kg-grid" aria-label="Knowledge Graph Example 1 — Part P-1023 at the centre">
+        <div class="kg-node" data-kg="ex1-equipment"><b>⚙ Equipment</b><span>A320 Engine</span></div>
+        <div class="kg-node" data-kg="ex1-inventory"><b>🏠 Inventory</b><span>Current stock: 4 units — real-time from S/4HANA / BDC</span></div>
+        <div class="kg-node" data-kg="ex1-workorder"><b>📄 Work Order</b><span>WO-4587 · status: open</span></div>
+        <div class="kg-node" data-kg="ex1-customer"><b>👤 Customer</b><span>SkyWays Airlines · high priority</span></div>
+        <div class="kg-node kg-centre" data-kg="ex1-part"><b>Part P-1023</b><span>the centre of the graph</span></div>
+        <div class="kg-node" data-kg="ex1-contract"><b>📋 Contract</b><span>SLA: 48h — from BDC</span></div>
+        <div class="kg-node" data-kg="ex1-supplier"><b>🏭 Supplier</b><span>Lead time: 2 days — from BDC / external</span></div>
+      </div>
+      <div class="detail" id="kgDetail1" aria-live="polite"><span class="dtag">Graph node · Example 1</span><p><b>Tap any node above</b> and this panel shows what it contributes to the decision.</p></div>
+      <div class="kg-principle">The Knowledge Graph doesn’t replace S/4HANA — it adds context and relationships so agents can reason across data and suggest better options.</div>
+
+      <h4 class="kg-ex-title">Example 2 — Boreal Knowledge Graph — Example (Simplified)<span>From the Overall Architecture Arc sheet — “Knowledge Graph for Boreal — Service Context &amp; Relationships”</span></h4>
+      <p class="tap-hint">Tap a node to see what it contributes.</p>
+      <div class="kg-grid" aria-label="Knowledge Graph Example 2 — Work Order WO-3187 at the centre">
+        <div class="kg-node" data-kg="ex2-equipment"><b>⚙ Equipment</b><span>ENG-772</span></div>
+        <div class="kg-node" data-kg="ex2-customer"><b>👥 Customer</b><span>ACME Aero</span></div>
+        <div class="kg-node" data-kg="ex2-contract"><b>📋 Contract / SLA</b><span>SLA-1004</span></div>
+        <div class="kg-node" data-kg="ex2-inventory"><b>🗄 Inventory</b><span>Station A</span></div>
+        <div class="kg-node kg-centre" data-kg="ex2-workorder"><b>Work Order WO-3187</b><span>the centre of the graph</span></div>
+        <div class="kg-node" data-kg="ex2-part"><b>🔩 Part</b><span>P-4432</span></div>
+        <div class="kg-node" data-kg="ex2-technician"><b>🧑‍🔧 Technician</b><span>Dana</span></div>
+        <div class="kg-node" data-kg="ex2-location"><b>📍 Location / Site</b><span>Hangar 3</span></div>
+        <div class="kg-node" data-kg="ex2-event"><b>⚠ Service Event</b><span>Shortage</span></div>
+      </div>
+      <div class="detail" id="kgDetail2" aria-live="polite"><span class="dtag">Graph node · Example 2</span><p><b>Tap any node above</b> and this panel shows what it contributes.</p></div>
+
+      <div class="kg-cols">
+        <div>
+          <h3>How agents use it — with Example 2 (WO-3187)</h3>
+          <ol class="flow-list">
+            <li>Stock agent sees a part shortage for WO-3187.</li>
+            <li>Uses the graph to understand: which equipment is affected, the customer and SLA impact, alternative inventory locations, related open work orders.</li>
+            <li>Recommends options (e.g. transfer from Station A, expedite, reschedule) with impact and approval needs.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>KG governance &amp; controls</h3>
+          <ul class="principles">
+            <li>Built from governed data (BDC).</li>
+            <li>Controlled data model — approved entities &amp; relationships.</li>
+            <li>Data quality checks — accuracy, completeness, freshness.</li>
+            <li>Change management &amp; lineage — who changed what, when.</li>
+            <li>Access control and audit trail — who can view and use the graph.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>From Event to Outcome — the fuller 8-step flow Page 1 now runs</h3>
+      <ol class="flow-list" id="flowList">
+        <li><b>Engineer records a part shortage on the tablet (offline).</b> Stored locally (encrypted) + queued for sync. <i>Arc: Capture.</i></li>
+        <li><b>App validates and syncs when in coverage.</b> CAP services check data, resolve conflicts.</li>
+        <li><b>Integration updates S/4HANA.</b> Work order / inventory is updated.</li>
+        <li><b>Stock agent investigates using BDC + Knowledge Graph.</b> Finds related parts, suppliers, impact. <i>Arc: Reason.</i></li>
+        <li><b>Agent proposes options</b> (transfer, expedite, reschedule). Shows facts + uncertainty — no execution.</li>
+        <li><b>Human approves the action.</b> Via workflow / approval controls. <i>Arc: Decide.</i></li>
+        <li><b>Execution updates S/4HANA.</b> Transaction goes through the business process. <i>Arc: Execute.</i></li>
+        <li><b>Outcome: issue resolved, customer informed, audit trail.</b> Full traceability and monitoring — and the outcome feeds the <b>Learn</b> stage, improving agents and knowledge. <i>Arc: Learn.</i></li>
+      </ol>
+      <p style="color:var(--muted);font-size:.92rem">Key principle, from the fuller map: <b style="color:var(--ink2)">agents investigate and recommend — they don’t execute consequential actions.</b></p>
+
+      <div class="sheet-nav">
+        <button class="btn btn-reset" data-goto="1">← Back to Page 1 — run it</button>
+        <button class="btn btn-run" data-goto="3">Next: Page 3 — evidence &amp; principles →</button>
+      </div>
+    </section>
+
+    <!-- ============ SHEET 3 : EVIDENCE ============ -->
+    <section class="sheet" id="sheet3" role="tabpanel" aria-label="Page 3 — Evidence and principles" hidden>
+      <h2>Page 3 — Evidence &amp; principles <span class="hand">what the run leaves behind</span></h2>
+      <p class="lede">Every step, refusal and approval from Page 1 lands here: the stock picture as the agents see it, the audit log, and the map’s Key Principles that the gate enforces.</p>
+
+      <h3>Stock picture — voltage regulator module (as the agents see it)</h3>
+      <div class="stock-wrap">
+      <table>
+        <thead><tr><th>Station</th><th>S/4 shows</th><th>Reality</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Home station</td><td id="homeS4">1</td><td id="homeReal">—</td><td><span class="pill unchecked" id="homePill">UNCHECKED</span></td></tr>
+          <tr><td>Station B (40 min)</td><td>1</td><td id="bReal">—</td><td><span class="pill unchecked" id="bPill">UNKNOWN</span></td></tr>
+          <tr><td>Station C (25 min)</td><td>1</td><td id="cReal">—</td><td><span class="pill unchecked" id="cPill">UNKNOWN</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <h3>Audit log</h3>
+      <div class="log" id="log"><span class="t">05:10</span>  Prototype ready. Synthetic scenario loaded: 22 stations, 140 engineers, 1 failed ground power unit. Display only — simulated systems, no live connection.</div>
+
+      <h3>Key Principles — from the map, enforced by the gate</h3>
+      <ul class="principles">
+        <li>The agent cannot turn stale data into confirmed stock.</li>
+        <li>The agent cannot turn an uncertain recovery plan into a customer commitment.</li>
+        <li>Agents use governed data (BDC) with business context (Knowledge Graph).</li>
+        <li>Application executes transactions; agents investigate and recommend.</li>
+        <li>Human approval for consequential actions.</li>
+        <li>The Knowledge Graph does not replace S/4HANA — it adds context and relationships so agents can reason across data.</li>
+      </ul>
+
+      <h3>Learn — the fifth stage of the arc, and what this page is for</h3>
+      <div class="scenario">
+        <p><b>Outcomes, data and feedback improve agents and knowledge.</b> This evidence page is where Learn starts: the audit trail above, the corrected phantom stock, and the logged gate refusal are exactly the feedback the next run learns from — a station that keeps going stale gets watched harder, a part that keeps failing gets flagged earlier, and the graph’s relationships get corrected where reality disagreed with them.</p>
+        <p>Business goal, from the arc view: keep field work running (offline capable), use AI to investigate and recommend, keep S/4HANA as the system of record, and operate securely, with control and governance. Key value: trusted, governed business context (BDC + KG), accurate auditable transactions in S/4HANA, and continuous learning and improvement.</p>
+      </div>
+
+    <div class="place-note" style="margin-top:20px">
+      <div class="dot">!</div>
+      <p><strong>Where is “the other place”? This is it</strong> — its own page, separate from the course chat and the earlier version, so you can open it tomorrow on its own. Nothing is published anywhere else. <strong>Display only:</strong> a simulation in your browser with synthetic data — no real connection to any S/4HANA or SAP system.</p>
+    </div>
+
+      <div class="sheet-nav">
+        <button class="btn btn-reset" data-goto="2">← Back to Page 2 — the map</button>
+        <button class="btn btn-run" data-goto="1">Back to Page 1 — run it again →</button>
+      </div>
+    </section>
+  </div>
+
+  <p class="foot">Boreal Field Services — interactive prototype built on the Solution Architecture map. 100% synthetic: no real company, system or operational data. Display / simulation only.</p>
+</div>
+
+<script>
+var step = 0;          /* event-to-outcome steps 1-5 run by the Run button; 6 = gate, 7 = execution, 8 = outcome + Learn */
+var refused = false;
+var approved = false;
+
+/* ---------- layered deck ---------- */
+function showSheet(n){
+  for(var i=1;i<=3;i++){
+    var s=document.getElementById('sheet'+i);
+    if(s) s.hidden = (i!==n);
+  }
+  var tabs=document.querySelectorAll('.deck-tab');
+  tabs.forEach(function(t){ t.setAttribute('aria-selected', t.getAttribute('data-sheet')==String(n) ? 'true':'false'); });
+  window.scrollTo(0,0);
+}
+
+/* ---------- progress (8 event-to-outcome steps) ---------- */
+var stepNames=["1 · Record","2 · Validate & sync","3 · Integration → S/4","4 · Investigate (BDC + KG)","5 · Propose options","6 · Human approves","7 · Execute in S/4","8 · Outcome + Learn"];
+(function buildProgress(){
+  var p=document.getElementById('progress');
+  stepNames.forEach(function(name,i){
+    var d=document.createElement('div'); d.className='pstep tappable'; d.id='pstep'+(i+1);
+    d.setAttribute('tabindex','0'); d.setAttribute('role','button');
+    d.setAttribute('aria-label','Run up to step '+(i+1)+': '+name);
+    d.innerHTML='<span class="n">'+(i+1)+'</span>'+name.replace(/^\d+ · /,'');
+    (function(target){ tapActivate(d,function(){ advanceToStep(target); }); })(i+1);
+    p.appendChild(d);
+  });
+})();
+function paintProgress(){
+  var rs=document.getElementById('runStatus');
+  if(rs){
+    rs.textContent = approved ? 'Morning resolved — 8 of 8 steps complete'
+      : (step===0 ? 'Ready — step 0 of 8'
+      : (step>=5 ? 'Step '+step+' of 8 done — next is the gate (Step 6)'
+      : 'Step '+step+' of 8 done — next: '+stepNames[step]));
+  }
+  for(var i=1;i<=8;i++){
+    var el=document.getElementById('pstep'+i);
+    el.classList.remove('done','now');
+    if(i<step || (approved && i<=8)) el.classList.add('done');
+    else if(i===step) el.classList.add('now');
+  }
+  var fl=document.querySelectorAll('#flowList li');
+  fl.forEach(function(li,i){
+    li.classList.remove('done','now');
+    var n=i+1;
+    if(n<step || approved) li.classList.add('done');
+    else if(n===step) li.classList.add('now');
+  });
+  paintArc();
+}
+function paintArc(){
+  /* Capture: steps 1-2 · Reason: 3-4 · Decide: 5-6 · Execute: 7 · Learn: 8 */
+  var upto = approved ? 5 : (step>=5 ? 3 : (step>=3 ? 2 : (step>=1 ? 1 : 0)));
+  for(var i=1;i<=5;i++){
+    var a=document.getElementById('arc'+i);
+    if(a) a.classList.toggle('on', i<=upto);
+  }
+}
+
+/* ---------- helpers ---------- */
+function logLine(text,cls){
+  var log=document.getElementById('log');
+  var span=document.createElement('span'); if(cls) span.className=cls;
+  span.textContent=text;
+  log.appendChild(document.createTextNode('\n')); log.appendChild(span);
+}
+function setLayers(list,pinkList){
+  document.querySelectorAll('[data-layer]').forEach(function(el){
+    el.classList.remove('on','on-pink','active');
+    var key=el.getAttribute('data-layer');
+    if(list.indexOf(key)>-1) el.classList.add(el.classList.contains('mini-layer')?'on':'on');
+    if(pinkList && pinkList.indexOf(key)>-1) el.classList.add('on-pink');
+  });
+  /* mini layers use .on class name on .mini-layer elements */
+  document.querySelectorAll('.mini-layer').forEach(function(el){
+    var key=el.getAttribute('data-layer');
+    el.classList.toggle('on', list.indexOf(key)>-1);
+    el.classList.toggle('on-pink', !!(pinkList && pinkList.indexOf(key)>-1));
+  });
+}
+function setAgent(id,statusId,liveId,state,statusText,liveText){
+  var a=document.getElementById(id);
+  a.classList.remove('active','done'); if(state) a.classList.add(state);
+  document.getElementById(statusId).textContent=statusText;
+  if(liveText) document.getElementById(liveId).textContent=liveText;
+}
+function showHold(msg){
+  var b=document.getElementById('holdBanner');
+  b.innerHTML=msg; b.classList.add('show');
+  clearTimeout(window.__holdT);
+  window.__holdT=setTimeout(function(){ b.classList.remove('show'); },7000);
+}
+
+/* ---------- the run: event-to-outcome steps 1-5 (6 = gate, 7-8 on approval) ---------- */
+var steps=[
+  { tag:"STEP 1 OF 8 — ENGINEER RECORDS THE SHORTAGE (OFFLINE) · ARC: CAPTURE",
+    layers:["tablet","identity"], pink:[],
+    html:"<p><b>Dana records the part shortage offline.</b> The hangar connection is down, so the record sits in the tablet’s <b>encrypted local storage</b>, in the sync queue — captured, not confirmed. Scout assembles the job pack from what is on the device and flags the parts risk.</p><p>Identity travels with Dana, not the tablet: the app acts as Dana, with Dana’s roles and stations.</p>",
+    log:"05:12  [1] Dana records the shortage OFFLINE. Stored locally (encrypted), queued for sync. S/4HANA not yet updated. Scout: job pack assembled, parts risk flagged." },
+  { tag:"STEP 2 OF 8 — APP VALIDATES AND SYNCS WHEN IN COVERAGE · ARC: CAPTURE",
+    layers:["cap","context"], pink:[],
+    html:"<p><b>Connectivity returns; the app validates and syncs.</b> CAP services check the data and resolve conflicts before anything posts: work order open, part correct for this equipment, Dana authorised for this station.</p><p>Validation also pulls in a sync that landed minutes earlier from another crew’s tablet — and that changes the stock picture at the next step.</p>",
+    log:"05:26  [2] Sync received. CAP validation: work order OK, part OK, authorisation OK; conflicts checked. A second crew sync has also landed…" },
+  { tag:"STEP 3 OF 8 — INTEGRATION UPDATES S/4HANA · ARC: REASON",
+    layers:["context","s4"], pink:[],
+    html:"<p><b>Integration updates S/4HANA</b> — the one governed path, never a private wire from a tablet into the system of record. The work order and inventory are updated, and the other crew’s late sync lands with them: they consumed the home station’s module yesterday, and their unsynced tablet was the only place that fact existed.</p><p>Simulated S/4HANA corrects the home station <b>1 → 0</b> — phantom stock exposed — and the conflict goes to the human review queue with both records attached. See the stock picture on Page 3.</p>",
+    log:"05:29  [3] Integration updates S/4HANA: work order / inventory updated. PHANTOM STOCK: home module consumed yesterday (unsynced tablet). S/4 corrected 1 -> 0; conflict queued for human review." },
+  { tag:"STEP 4 OF 8 — STOCK INVESTIGATES USING BDC + KNOWLEDGE GRAPH · ARC: REASON",
+    layers:["agents","aicore","context","kg"], pink:[],
+    html:"<p><b>Stock investigates over governed BDC data, walking the Knowledge Graph</b> (full graph on Page 2): the part connects to the equipment, the work order, the customer and its SLA, inventory at other stations, and the supplier’s lead time. That context is what separates a count from a decision.</p><p><b>Station B</b> shows 1 and synced 10 minutes ago — <b>verified</b>. <b>Station C</b> shows 1 but has not synced in 26 hours — <b>unverified</b>. The graph adds context; it does not upgrade stale data into confirmed stock.</p>",
+    log:"05:31  [4] Stock investigates via BDC + Knowledge Graph (part -> equipment, work order, customer/SLA, inventory, supplier). Station B VERIFIED (synced 10 min ago), Station C UNVERIFIED (no sync in 26h)." },
+  { tag:"STEP 5 OF 8 — AGENT PROPOSES OPTIONS: FACTS + UNCERTAINTY, NO EXECUTION · ARC: DECIDE",
+    layers:["agents","aicore","kg"], pink:[],
+    html:"<p><b>Stock proposes, Dispatch checks the impact.</b> Options: transfer from Station B (verified, ETA ~06:20), transfer from Station C (closer, <b>uncertainty shown, not hidden</b>), or expedite / reschedule. The proposal shows facts and uncertainty — and executes <b>nothing</b>.</p><p>Dispatch confirms the verified transfer lands well inside the <b>10:15 medevac deadline</b> — and makes <b>no customer commitment</b>, because a commitment waits for verified stock and human approval.</p><p><b>Now Step 6 is yours:</b> use the pink gate box below. Try the unverified approval first and watch the gate refuse it — then approve the verified transfer.</p>",
+    log:"05:33  [5] Options proposed with facts + uncertainty (no execution): transfer from Station B (verified). Dispatch: ETA 06:20 vs 10:15 deadline — recoverable. NO customer commitment made." }
+];
+
+function setNextLabels(main,top){
+  document.getElementById('nextBtn').textContent=main;
+  var t=document.getElementById('nextBtnTop'); if(t) t.textContent=top||main;
+}
+function advanceOne(){
+  var s=steps[step];
+  step++;
+  document.getElementById('stage').innerHTML="<span class='tag'>"+s.tag+"</span>"+s.html;
+  setLayers(s.layers,s.pink);
+  logLine(s.log,"t");
+  if(step===1) setAgent('agentScout','statusScout','liveScout','active','Working','Job pack built. This unit’s regulator has failed twice in 90 days — triage note attached.');
+  if(step===2) setAgent('agentScout','statusScout','liveScout','done','Complete','Pack validated and synced by the CAP application.');
+  if(step===3){
+    document.getElementById('homeS4').textContent="0";
+    document.getElementById('homeReal').textContent="0 — consumed yesterday";
+    var hp=document.getElementById('homePill'); hp.textContent="PHANTOM — CORRECTED"; hp.className="pill phantom";
+  }
+  if(step===4){
+    setAgent('agentStock','statusStock','liveStock','active','Investigating','Walking the Knowledge Graph: equipment, work order, customer SLA, supplier. Station B verified, Station C unverified — labels attached, nothing upgraded.');
+    document.getElementById('bReal').textContent="1 — synced 10 min ago";
+    var bp=document.getElementById('bPill'); bp.textContent="VERIFIED"; bp.className="pill verified";
+    document.getElementById('cReal').textContent="1 shown — no sync in 26h";
+    var cp=document.getElementById('cPill'); cp.textContent="UNVERIFIED"; cp.className="pill unverified";
+  }
+  if(step===5){
+    setAgent('agentStock','statusStock','liveStock','done','Recommended','Proposes the verified Station B transfer, facts and uncertainty shown. Station C shown, labelled unverified, not hidden. Nothing executed.');
+    setAgent('agentDispatch','statusDispatch','liveDispatch','active','Watching','Verified ETA 06:20 holds the 10:15 deadline. No customer promise made.');
+    setNextLabels("Step 6 is yours — use the gate ↓","Step 6: use the gate ↓");
+  }
+  paintProgress();
+}
+function nextStep(){
+  if(approved){ showHold("<b>The morning is already resolved.</b> Reset to run it again."); return; }
+  if(step>=5){
+    showHold("<b>Step 6 is the human’s, not the Run button’s.</b> Use the gate box below: try the unverified (pink) approval, then approve the verified transfer.");
+    document.getElementById('pstep6').classList.add('now');
+    return;
+  }
+  advanceOne();
+}
+function advanceToStep(target){
+  if(approved){ showHold("<b>The morning is already resolved.</b> Reset to run it again."); return; }
+  if(target>5){
+    while(step<5) advanceOne();
+    showHold("<b>Step 6 is the human’s.</b> The run is at the gate: try the unverified (pink) approval and watch it refuse, then approve the verified transfer — execution (7) and outcome + Learn (8) follow from that approval.");
+    var gz=document.querySelector('.gate-zone');
+    if(gz) gz.scrollIntoView({block:'center'});
+    document.getElementById('pstep6').classList.add('now');
+    return;
+  }
+  if(step>=target){ showHold("<b>Already there.</b> The run is at step "+step+" of 8 — tap a later stage, or Reset to start over."); return; }
+  while(step<target && step<5) advanceOne();
+  var st=document.getElementById('stage');
+  if(st) st.scrollIntoView({block:'center'});
+}
+
+/* ---------- step 6: the gate ---------- */
+function tryBadApprove(){
+  if(approved){ showHold("<b>Already resolved.</b> The verified transfer was approved and executed; the unverified line stays refused in the log."); return; }
+  if(step<4){
+    setLayers(["gov"],["agents"]);
+    showHold("<b>GATE HOLD.</b> The gate heard you — but Stock has not investigated yet (you are on step "+step+" of 8), so there is no verified or unverified line to approve. Run the steps first; after Step 4, this same pink button produces the formal refusal.");
+    logLine("05:3"+step+"  APPROVAL ATTEMPT on Station C before investigation: GATE HOLD — no investigated line exists yet. Attempt logged.","r");
+    return;
+  }
+  refused=true;
+  document.getElementById('refuseBanner').classList.add('show');
+  setLayers(["gov"],["agents"]);
+  setAgent('agentStock','statusStock','liveStock','active','Refused at gate','Station C stays UNVERIFIED. Stale data was not turned into confirmed stock.');
+  logLine("05:35  [6] APPROVAL ATTEMPT on Station C (unverified): GATE REFUSAL — approval does not apply to unverified stock. Refusal logged; agent and approver notified.","r");
+  paintProgress();
+}
+function approveVerified(){
+  if(approved){ showHold("<b>Already executed.</b> The reservation is in simulated S/4HANA and in the log on Page 3."); return; }
+  if(step<4){
+    setLayers(["gov"],[]);
+    showHold("<b>GATE HOLD.</b> The gate heard you — but the verified line only exists after Stock investigates in Step 4. Run the steps first, then this button executes the transfer.");
+    logLine("05:3"+step+"  APPROVAL ATTEMPT on Station B before investigation: GATE HOLD — no verified line exists yet. Attempt logged.","r");
+    return;
+  }
+  approved=true; step=8;
+  document.getElementById('okBanner').classList.add('show');
+  document.getElementById('stage').innerHTML="<span class='tag'>STEPS 7–8 OF 8 — EXECUTION, OUTCOME &amp; LEARN</span><p><b>The morning is recovered.</b> The verified module is in transit from Station B, the reservation sits in simulated S/4HANA against the medevac job, the customer is informed, and every step — including the refusal — is in the audit log on Page 3.</p><p><b>Learn:</b> this outcome now feeds back — the phantom-stock pattern, Station C’s stale sync and the refusal itself improve the agents and the Knowledge Graph for the next morning.</p><p>The architecture did not make Dana faster. It made sure nobody, human or agent, acted on stock that was not there.</p>";
+  setLayers(["s4","context","gov","kg"],[]);
+  setAgent('agentStock','statusStock','liveStock','done','Complete','Verified transfer executed. Station B stock reserved against the medevac job.');
+  setAgent('agentDispatch','statusDispatch','liveDispatch','done','Complete','Customer update issued — only now, on verified stock and an approved plan. 10:15 holds.');
+  logLine("05:38  [6] HUMAN APPROVAL: Station B verified transfer approved.","g");
+  logLine("05:38  [7] Execution updates S/4HANA via Integration Suite. Simulated S/4HANA: reservation created against the medevac job. Station B 1 -> 0, in transit, ETA 06:20.","g");
+  logLine("05:39  [8] OUTCOME: issue resolved, customer informed, full audit trail. Dispatch: repair window holds for the 10:15 medevac flight.","g");
+  logLine("05:40  LEARN: outcome, phantom-stock pattern and gate refusal fed back — agents and Knowledge Graph updated for the next run.","g");
+  setNextLabels("✓ Morning resolved","✓ Resolved");
+  paintProgress();
+}
+function resetAll(){ location.reload(); }
+
+/* ---------- control bindings (script-bound, no inline handlers) ---------- */
+document.querySelectorAll('.deck-tab').forEach(function(t){
+  t.addEventListener('click',function(){ showSheet(parseInt(t.getAttribute('data-sheet'),10)); });
+});
+document.querySelectorAll('[data-goto]').forEach(function(b){
+  b.addEventListener('click',function(){ showSheet(parseInt(b.getAttribute('data-goto'),10)); });
+});
+document.getElementById('nextBtn').addEventListener('click',nextStep);
+document.getElementById('nextBtnTop').addEventListener('click',nextStep);
+document.getElementById('resetBtnTop').addEventListener('click',resetAll);
+document.getElementById('resetBtn').addEventListener('click',resetAll);
+document.getElementById('badApproveBtn').addEventListener('click',tryBadApprove);
+document.getElementById('goodApproveBtn').addEventListener('click',approveVerified);
+
+/* ---------- interactivity: cards, arc, layers, map, graph ---------- */
+function tapActivate(el,fn){
+  el.addEventListener('click',fn);
+  el.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(); } });
+}
+function selectIn(el,selector){
+  document.querySelectorAll(selector).forEach(function(x){ x.classList.remove('sel'); });
+  el.classList.add('sel');
+}
+
+/* agents: what each one is doing at the current step (index = step 0..8) */
+var agentInfo={
+  scout:{name:'Scout — Issue triage',steps:[
+    'Waiting for the work-order event.',
+    'Recording Dana’s shortage offline and assembling the job pack — work order, service history, manual sections, parts picture.',
+    'Job pack validated and synced by the CAP application; the second crew’s late sync is now visible too.',
+    'Watching the S/4HANA correction land — the phantom stock Scout flagged is with the human review queue.',
+    'Parts question handed to Stock; Scout keeps capturing Dana’s findings on site.',
+    'Triage complete. Scout’s pack is the evidence base under the options now on the table.',
+    'Standing by — Step 6 is the human’s gate, not Scout’s.',
+    'Execution is running through Integration Suite; Scout plays no part in the transaction.',
+    'Outcome captured: this regulator has now failed twice in 90 days — written back for the Learn stage.']},
+  stock:{name:'Stock — Availability & options',steps:[
+    'Waiting for a parts question.',
+    'A parts risk is flagged, but the shortage is not synced yet — there is nothing verified to investigate.',
+    'Sync landed; preparing to investigate once S/4HANA carries the update.',
+    'S/4HANA corrected the home station 1 → 0. Stock now looks beyond the home station.',
+    'Walking the Knowledge Graph: part → equipment, work order, customer/SLA, inventory, supplier. Station B verified, Station C unverified — labels attached, nothing upgraded.',
+    'Options proposed with facts and uncertainty shown. Nothing executed.',
+    'At the gate: Station C stays UNVERIFIED — stale data is not turned into confirmed stock. Only the verified Station B line can be approved.',
+    'Verified transfer executing; the reservation is being created in S/4HANA.',
+    'Stock picture corrected and fed back — Station C’s stale sync is watched harder from now on.']},
+  dispatch:{name:'Dispatch — Schedule & impact',steps:[
+    'Watching the 10:15 deadline.',
+    'Deadline clock noted; no re-sequencing until the parts picture is real.',
+    'No schedule change yet — Dispatch does not plan around unverified stock.',
+    'Re-checking the window: a verified transfer can still hold the 10:15 deadline.',
+    'Checking each option’s impact against engineer location, certifications, weather and the medevac clock.',
+    'Verified ETA 06:20 holds the 10:15 deadline. No customer promise made.',
+    'Waiting on the human decision — Dispatch makes no customer commitment on its own.',
+    'Approval exists, so the customer update is being prepared.',
+    'Customer informed and the repair window holds for the 10:15 medevac flight.']}
+};
+document.querySelectorAll('.agent[data-agent]').forEach(function(card){
+  tapActivate(card,function(){
+    selectIn(card,'.agent[data-agent]');
+    var info=agentInfo[card.getAttribute('data-agent')];
+    var idx=approved?8:step;
+    document.getElementById('agentDetail').innerHTML="<span class='dtag'>Agent · step "+idx+" of 8</span><p><b>"+info.name+":</b> "+info.steps[idx]+"</p>";
+  });
+});
+
+/* arc: tap a stage, run up to it (Capture→2 · Reason→4 · Decide→5 · Execute→7 · Learn→8) */
+var arcTargets={1:2,2:4,3:5,4:7,5:8};
+document.querySelectorAll('.arc-step[data-arc]').forEach(function(el){
+  tapActivate(el,function(){
+    selectIn(el,'.arc-step[data-arc]');
+    advanceToStep(arcTargets[el.getAttribute('data-arc')]);
+  });
+});
+
+/* layers (mini skeleton on Page 1, full map on Page 2) */
+var layerInfo={
+  tablet:['Field Engineers — Tablets','Dana and the team capture work orders, parts usage, photos and notes — offline first, encrypted on the device, queued to sync when coverage returns.'],
+  cap:['Field Service Application (CAP) — BTP','The application layer: APIs, offline sync and validation, conflict handling and business rules. It validates before anything is allowed to post.'],
+  agents:['Joule Studio — AI Agents','Scout, Stock and Dispatch live here. They investigate and recommend; they never execute consequential actions.'],
+  aicore:['AI Core / GenAI Hub','Managed AI runtime and model access, with Responsible AI controls — the engine room under the agents.'],
+  context:['Integration & Context Services','Integration Suite moves data on governed paths (APIs and events); Business Data Cloud supplies the governed data the agents reason over.'],
+  kg:['Knowledge Graph — its own layer','Connects part ↔ equipment · work order · customer · inventory · contract · supplier, so agents reason with context, not isolated counts. It adds relationships; it does not replace S/4HANA.'],
+  s4:['SAP S/4HANA — System of Record','The authoritative transactional system: work orders, inventory and reservations, contracts and billing. Only confirmed actions land here, and only via integration.'],
+  identity:['Identity & Access — Cloud Identity Services','Authentication, roles and conditional access. The app acts as the engineer, carrying that person’s roles and stations.'],
+  gov:['Governance & Operations','Agent Hub registry and control, monitoring and audit, guardrails and graph governance — the layer that logs every step, including the gate refusal.']
+};
+function currentLayers(){
+  if(approved) return ['s4','context','gov','kg'];
+  if(step>=1 && step<=5) return steps[step-1].layers;
+  return [];
+}
+document.querySelectorAll('[data-layer]').forEach(function(el){
+  el.classList.add('tappable'); el.setAttribute('tabindex','0'); el.setAttribute('role','button');
+  tapActivate(el,function(){
+    var key=el.getAttribute('data-layer');
+    selectIn(el,'[data-layer="'+key+'"]');
+    document.querySelectorAll('[data-layer="'+key+'"]').forEach(function(x){ x.classList.add('sel'); });
+    var info=layerInfo[key]; if(!info) return;
+    var lit=currentLayers().indexOf(key)>-1;
+    var html="<span class='dtag'>Layer · step "+step+" of 8</span><p><b>"+info[0]+":</b> "+info[1]+"</p><p style='margin-top:6px'><b>Right now:</b> "+(lit?'lit — this layer is doing the work at the current step.':'not lit at the current step — watch it light up as the run reaches its part.')+"</p>";
+    var onMap=!!el.closest('#sheet2');
+    document.getElementById(onMap?'mapDetail':'layerDetail').innerHTML=html;
+    if(!onMap){ var md=document.getElementById('mapDetail'); if(md) md.innerHTML=html.replace('Layer ·','Map layer ·'); }
+    else { document.getElementById('layerDetail').innerHTML=html; }
+  });
+});
+
+/* knowledge graph nodes — two separate examples, each with its own detail panel */
+var kgInfo={
+  'ex1-equipment':['Equipment — A320 Engine','The equipment Part P-1023 belongs to. Through the graph, one part shortage immediately shows which equipment is affected.'],
+  'ex1-inventory':['Inventory — current stock: 4 units','Real-time from S/4HANA / BDC. A count on its own is not a decision — the graph attaches it to the work order, the customer and the SLA.'],
+  'ex1-workorder':['Work Order WO-4587 — status: open','The open work order that needs Part P-1023. Its status drives how hard the agents investigate.'],
+  'ex1-customer':['Customer — SkyWays Airlines','High priority. The customer is why this shortage carries weight beyond a stock count.'],
+  'ex1-part':['Part P-1023 — the centre of the graph','Every relationship in this example runs through the part: equipment, work order, customer, inventory, contract and supplier all meet here.'],
+  'ex1-contract':['Contract — SLA: 48h','From BDC. The SLA turns a stock count into a deadline the options have to respect.'],
+  'ex1-supplier':['Supplier — lead time: 2 days','From BDC / external. The fallback when no station transfer works: expedite against a known lead time.'],
+  'ex2-equipment':['Equipment — ENG-772','The equipment on Work Order WO-3187 — the graph shows which equipment the shortage affects.'],
+  'ex2-customer':['Customer — ACME Aero','The customer WO-3187 belongs to; the graph carries the customer and SLA impact into the recommendation.'],
+  'ex2-contract':['Contract / SLA — SLA-1004','WO-3187 is covered by this SLA, so the options are judged against its impact.'],
+  'ex2-inventory':['Inventory — Station A','An alternative inventory location the graph surfaces — the source of the transfer option in “How agents use it” below.'],
+  'ex2-workorder':['Work Order WO-3187 — the centre of the graph','Every relationship in this example runs through the work order: equipment, customer, contract / SLA, part, technician, location, inventory and the shortage event.'],
+  'ex2-part':['Part — P-4432','The part WO-3187 requires, at Hangar 3.'],
+  'ex2-technician':['Technician — Dana','Dana is assigned to WO-3187.'],
+  'ex2-location':['Location / Site — Hangar 3','Where WO-3187’s part is required.'],
+  'ex2-event':['Service Event — Shortage','The shortage impacting WO-3187 — the event the Stock agent investigates.']
+};
+document.querySelectorAll('.kg-node[data-kg]').forEach(function(node){
+  var key=node.getAttribute('data-kg'); if(!kgInfo[key]) return;
+  node.classList.add('tappable'); node.setAttribute('tabindex','0'); node.setAttribute('role','button');
+  tapActivate(node,function(){
+    selectIn(node,'.kg-node');
+    var info=kgInfo[key];
+    var panel=document.getElementById(key.indexOf('ex2-')===0 ? 'kgDetail2' : 'kgDetail1');
+    if(panel) panel.innerHTML="<span class='dtag'>Graph node</span><p><b>"+info[0]+":</b> "+info[1]+"</p>";
+  });
+});
+
+/* fuller flow list on Page 2: tap a step to run up to it */
+document.querySelectorAll('#flowList li').forEach(function(li,i){
+  li.classList.add('tappable'); li.setAttribute('tabindex','0'); li.setAttribute('role','button');
+  tapActivate(li,function(){
+    if(i+1>5 && !approved){ advanceToStep(5); showSheet(1); var gz=document.querySelector('.gate-zone'); if(gz) gz.scrollIntoView({block:'center'}); return; }
+    advanceToStep(i+1);
+  });
+});
+paintProgress();
+</script>
+</body>
+</html>
