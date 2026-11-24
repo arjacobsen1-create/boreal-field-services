@@ -32,7 +32,8 @@ Key principles the design holds:
 
 ## Contents
 
-- `prototype/index.html` — the interactive prototype. Open it in a browser and run the January morning yourself: step through the event, watch the three agents work, and try both approvals at the gate. The unverified transfer is refused; the verified one goes through.
+- `app/` — the prototype recreated in Python: the morning as a state machine, the governance gates as enforced code, and a standard-library web server that renders the dashboard. This is the main implementation.
+- `prototype/index.html` — the static HTML mirror of the prototype, served live on GitHub Pages. Open it in a browser and run the January morning yourself: step through the event, watch the three agents work, and try both approvals at the gate. The unverified transfer is refused; the verified one goes through.
 - `docs/boreal-field-services-scenario.md` — the full scenario: the company, the January event, the three pillars (Build, Contextualize and Reason, Govern), the end-to-end sequence, and the five design calls with the alternatives rejected.
 - `docs/design-decisions-and-follow-up-answers.md` — the design decisions defended in depth, including the feedback loop and where Joule Studio sits.
 - `docs/boreal-complete-package-2026-11-20.pdf` — the complete package as a single document.
