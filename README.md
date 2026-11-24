@@ -2,6 +2,8 @@
 
 An AI-enabled field service architecture on SAP BTP and SAP S/4HANA, designed end to end: scenario, solution architecture, design decisions, and a working interactive prototype.
 
+**Live prototype:** https://arjacobsen1-create.github.io/boreal-field-services/prototype/
+
 Boreal Field Services maintains ground support equipment for airports across the north. About 140 field engineers cover 22 stations, working on tablets in places where connectivity ranges from hangar Wi-Fi to satellite links to nothing at all for hours at a time. The design problem: a ground power unit fails its start check on a January morning, a medevac flight is due through the station in five hours, and the part the system says is on the shelf is not there, because another crew consumed it yesterday and their tablet has not synced since.
 
 ## The design in one line
@@ -35,6 +37,7 @@ Key principles the design holds:
 - `docs/design-decisions-and-follow-up-answers.md` — the design decisions defended in depth, including the feedback loop and where Joule Studio sits.
 - `docs/boreal-complete-package-2026-11-20.pdf` — the complete package as a single document.
 - `images/` — the design sheets the prototype was built and checked against: the overall solution architecture, the end-to-end architecture arc, the handwritten solution architecture view, and the design in one picture.
+- `build-shell/` — the implementation skeleton mapped to the architecture: the CAP data model, the three agent definitions, the Python AI layer (AI Core / GenAI Hub access), integration notes, sample stock data, and the governance gates as code.
 
 ## Status
 
