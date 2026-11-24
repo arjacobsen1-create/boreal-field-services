@@ -1,0 +1,7 @@
+# The simulation (stock_picture.py, gates.py, run_morning.py, test_gates.py)
+# runs on the Python standard library only. Nothing to install.
+#
+# Real build, against the AI Core / GenAI Hub environment, would pin:
+# requests>=2.32
+# pydantic>=2.0
+# SAP AI Core SDK / GenAI Hub access libraries, as applicable.
